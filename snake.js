@@ -1,11 +1,12 @@
+var grid = 16;
 const PEAR_SIZE = 2;
-const BULLET_SPEED = grid * 1.4;
-const BULLET_INTERVAL = 4;
+const BULLET_SPEED = grid;
+const BULLET_INTERVAL = 40;
+const BULLET_SIZE = 0.5 * grid;
 
 var canvas = document.getElementById("game");
 var context = canvas.getContext("2d");
 
-var grid = 16;
 var count = 0;
 var score = 0;
 var bulletCount = 0;
@@ -21,7 +22,7 @@ var snake = {
   // keep track of all grids the snake body occupies
   cells: [],
 
-  // length of the snake. grows when eating an apple hi bye
+  // length of the snake. grows when eating an apple
   maxCells: 4
 };
 var apple = {
@@ -37,9 +38,31 @@ function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min) + min);
 }
 
+function resetGame() {
+  score = snake.cells.length - 4;
+
+  snake.x = 160;
+  snake.y = 160;
+  snake.cells = [];
+  snake.maxCells = 4;
+  snake.dx = grid;
+  snake.dy = 0;
+
+  apple.x = getRandomInt(0, 25) * grid;
+  apple.y = getRandomInt(0, 25) * grid;
+}
+
 // game loop
 function loop() {
   requestAnimationFrame(loop);
+
+  // slow game loop to 30 fps instead of 60 (60/30 = 2)
+  if (++count < 2) {
+    return;
+  }
+
+  count = 0;
+  context.clearRect(0, 0, canvas.width, canvas.height);
   context.font = "30px Arial";
   context.fillText(`${snake.cells.length - 4}`, 45, 56);
 
@@ -85,19 +108,39 @@ function loop() {
     pear.y -= grid;
   }
 
+  bulletCount += 1;
   if (bulletCount === BULLET_INTERVAL) {
     let dx = 0;
     let dy = 0;
-    if (getRandomInt(0, 1) === 0) {
-      dx = getRandomInt(0, 1) === 0 ? BULLET_SPEED : -BULLET_SPEED;
+    if (getRandomInt(0, 2) === 0) {
+      dx = getRandomInt(0, 2) === 0 ? BULLET_SPEED : -BULLET_SPEED;
     } else {
-      dy = getRandomInt(0, 1) === 0 ? BULLET_SPEED : -BULLET_SPEED;
+      dy = getRandomInt(0, 2) === 0 ? BULLET_SPEED : -BULLET_SPEED;
     }
     // create bullet
-    const bullet = { x: pear.x, y: pear.y, dx, dyssssssssss };
+    const bullet = { x: pear.x, y: pear.y, dx, dy };
+    console.log("create", bullet);
     bullets.push(bullet);
     bulletCount = 0;
   }
+
+  // move bullets
+
+  bullets = bullets.filter(bullet => {
+    // move bullet by it's velocity
+    bullet.x += bullet.dx;
+    bullet.y += bullet.dy;
+    if (
+      bullet.x < 0 ||
+      bullet.x >= canvas.width ||
+      bullet.y < 0 ||
+      bullet.y >= canvas.height
+    ) {
+      return false;
+    }
+    return true;
+  });
+
   // wrap snake position horizontally on edge of screen
   if (pear.x < 0) {
     pear.x = canvas.width - grid;
@@ -114,6 +157,11 @@ function loop() {
   context.fillStyle = "yellow";
   context.fillRect(pear.x, pear.y, PEAR_SIZE * grid - 1, PEAR_SIZE * grid - 1);
 
+  // draw bullets
+  for (const bullet of bullets) {
+    context.fillStyle = "yellow";
+    context.fillRect(bullet.x, bullet.y, BULLET_SIZE, BULLET_SIZE);
+  }
   // draw snake one cell at a time
   context.fillStyle = "green";
   snake.cells.forEach(function(cell, index) {
@@ -132,27 +180,27 @@ function loop() {
     // check collision with all cells after this one (modified bubble sort)
     for (var i = index + 1; i < snake.cells.length; i++) {
       // snake occupies same space as a body part or hits pear. disply score and reset game
-      if (
-        (cell.x === snake.cells[i].x && cell.y === snake.cells[i].y) ||
-        (cell.x >= pear.x &&
-          cell.x <= pear.x + PEAR_SIZE * grid &&
-          cell.y >= pear.y &&
-          cell.y <= pear.y + PEAR_SIZE * grid)
-      ) {
-        score = snake.cells.length - 4;
+      if (cell.x === snake.cells[i].x && cell.y === snake.cells[i].y) {
+        resetGame();
+      }
+    }
 
-        snake.x = 160;
-        snake.y = 160;
-        snake.cells = [];
-        snake.maxCells = 4;
-        snake.dx = grid;
-        snake.dy = 0;
-
-        apple.x = getRandomInt(0, 25) * grid;
-        apple.y = getRandomInt(0, 25) * grid;
+    for (const bullet of bullets) {
+      if (cell.x === bullet.x && cell.y === bullet.y) {
+        resetGame();
       }
     }
   });
+
+  const head = snake.cells[0];
+  if (
+    head.x >= pear.x &&
+    head.x <= pear.x + PEAR_SIZE * grid &&
+    head.y >= pear.y &&
+    head.y <= pear.y + PEAR_SIZE * grid
+  ) {
+    resetGame();
+  }
 }
 
 // listen to keyboard events to move the snake
