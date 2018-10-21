@@ -1,14 +1,14 @@
 var grid = 16;
 const PEAR_SIZE = 2;
 const BULLET_SPEED = grid;
-const BULLET_INTERVAL = 40;
-const BULLET_SIZE = 0.5 * grid;
+const BULLET_INTERVAL = 10;
+const BULLET_SIZE = grid;
 
 var canvas = document.getElementById("game");
 var context = canvas.getContext("2d");
 
 var count = 0;
-var score = 0;
+var score = 4;
 var bulletCount = 0;
 
 var snake = {
@@ -39,7 +39,7 @@ function getRandomInt(min, max) {
 }
 
 function resetGame() {
-  score = snake.cells.length - 4;
+  score = snake.cells.length;
 
   snake.x = 160;
   snake.y = 160;
@@ -64,7 +64,7 @@ function loop() {
   count = 0;
   context.clearRect(0, 0, canvas.width, canvas.height);
   context.font = "30px Arial";
-  context.fillText(`${snake.cells.length - 4}`, 45, 56);
+  context.fillText(`${snake.maxCells}`, 45, 56);
 
   // move snake by it's velocity
   snake.x += snake.dx;
@@ -119,7 +119,6 @@ function loop() {
     }
     // create bullet
     const bullet = { x: pear.x, y: pear.y, dx, dy };
-    console.log("create", bullet);
     bullets.push(bullet);
     bulletCount = 0;
   }
@@ -187,7 +186,8 @@ function loop() {
 
     for (const bullet of bullets) {
       if (cell.x === bullet.x && cell.y === bullet.y) {
-        resetGame();
+        snake.maxCells--;
+        snake.cells.pop();
       }
     }
   });
