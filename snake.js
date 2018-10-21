@@ -8,7 +8,6 @@ var canvas = document.getElementById("game");
 var context = canvas.getContext("2d");
 
 var count = 0;
-var score = 4;
 var bulletCount = 0;
 
 var snake = {
@@ -39,8 +38,6 @@ function getRandomInt(min, max) {
 }
 
 function resetGame() {
-  score = snake.cells.length;
-
   snake.x = 160;
   snake.y = 160;
   snake.cells = [];
