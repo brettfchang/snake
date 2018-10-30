@@ -1,4 +1,4 @@
-var grid = 16;
+const grid = 16;
 const PEAR_SIZE = 2;
 const BULLET_SPEED = grid;
 const BULLET_INTERVAL = 10;
@@ -7,6 +7,8 @@ const BULLET_SIZE = grid;
 var canvas = document.getElementById("game");
 var context = canvas.getContext("2d");
 
+var score = 0;
+var highScore = 0;
 var count = 0;
 var bulletCount = 0;
 
@@ -38,6 +40,11 @@ function getRandomInt(min, max) {
 }
 
 function resetGame() {
+  if (score > highScore) {
+    highScore = score;
+  }
+  score = 0;
+
   snake.x = 160;
   snake.y = 160;
   snake.cells = [];
@@ -61,7 +68,8 @@ function loop() {
   count = 0;
   context.clearRect(0, 0, canvas.width, canvas.height);
   context.font = "30px Arial";
-  context.fillText(`${snake.maxCells}`, 45, 56);
+  context.fillText(`score: ${score}`, 45, 56);
+  context.fillText(`high score: ${highScore}`, 550, 56);
 
   // move snake by it's velocity
   snake.x += snake.dx;
@@ -164,8 +172,9 @@ function loop() {
     // drawing 1 px smaller than the grid creates a grid effect in the snake body so you can see how long it is
     context.fillRect(cell.x, cell.y, grid - 1, grid - 1);
 
-    // snake ate apple
+    // snake eats apple
     if (cell.x === apple.x && cell.y === apple.y) {
+      score += snake.maxCells;
       snake.maxCells++;
 
       // canvas is 400x400 which is 25x25 grids
@@ -183,8 +192,12 @@ function loop() {
 
     for (const bullet of bullets) {
       if (cell.x === bullet.x && cell.y === bullet.y) {
-        snake.maxCells--;
-        snake.cells.pop();
+        if (snake.maxCells === 1) {
+          resetGame();
+        } else {
+          snake.maxCells--;
+          snake.cells.pop();
+        }
       }
     }
   });
